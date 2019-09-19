@@ -1,85 +1,47 @@
-# LAB: Socket.io
+# LAB: Access Control
 
-Create a multi-client, event driven "smart app"
+Being able to login is great. But controlling access is vital to creating a scalable system. In this lab, you will implement Role Based Access Control (RBAC) using a dynamic Access Control List (ACL) with Mongo models.
 
 ## Before you begin
 Refer to *Getting Started*  in the [lab submission instructions](../../../reference/submission-instructions/labs/README.md) for complete setup, configuration, deployment, and submission instructions.
 
-**Visualize the Application**
-
-Evaluate the lab requirements and begin with drawing a **UML** and/or **Data/Process Flow diagram**.  Having a solid visual understanding of the code you have/need and how it connects is critical to properly approaching this assignment.
-
-**Break Down the Assignment**
-
-Once you have a good visual and mental model of how the application works, break down the requirements. For each requirement, ask your self the following questions:
-
-* Where should this new code live in the codebase?
-* What existing code needs to be modified?
-* What dependencies will I need to install?
-
-**Map your priorities and dependencies before jumping into the code.**
-
----
 
 ## Getting Started
 
-* `app.js` 
-  * Accepts a filename as a command line parameter
-  * Reads the file from the file system
-  * Converts it's contents to upper case
-  * Writes it back to the file system
-
 ## Requirements
 
-Refactor the provided application (`app.js`) using best practices for modularization, asynchronous file access, and test-ability.
+* Create a new router that contains a few new routes (see examples below) that we can protect using our authentication model.
+* Protect your New Routes with the proper permissions based on user capability
+  * `router.get('/public-stuff')` should be visible by anyone
+  * `router.get('/hidden-stuff')` should require only a valid login
+  * `router.get('/something-to-read')` should require the `read` capability
+  * `router.post('/create-a-thing)` should require the `create` capability
+  * `router.put('/update)` should require the `update` capability
+  * `router.patch('/jp)` should require the `update` capability
+  * `router.delete('/bye-bye)` should require the `delete` capability
+  * `router.get('/everything')` should require the `superuser` capability
+* You will need to restrict based on the given permission via middleware
+* Implementation of the ACL itself should be re-written using a separate model called "roles" populated as a **virtual field** in the users table
+   * *not as a hard-coded table within the User Model as done in the demo*
+   * Hint: This might impact the .can() function and how you build out the token
+   
+### Notes
+* You will need to create, roles and capabilities permissions in a new collection called 'roles' in  your mongoose database before anything will work properly
+* There are many ways to do this
+  * Create a route that lets you create a role (similar to a POST in the API) and create them one at a time
+  * Create a route that builds the roles collection 
+  * Write a separate .js script that builds the roles and an npm script that you can use to initiate that from the command line (or during deployment)
 
-Connect the application (app.js) to a `socker.io` server and emit messages related to file access.  Connect a new application (`logger`) to the server and log all file activity.
+To test your routes, you'll need to first login with a valid user to get a token, and then use httpie or postman to hit the routes using a Bearer Token
 
-### Assignment
-* The application must accept a filename as a command line parameter
-  * Read the file from the file system
-  * Convert it's contents to upper case
-  * Write it back to the file system
-* Following the write operation, report back to the user (console.log) the status
-* Any and all errors must be thrown
-
-#### Server
-* Create a socket.io server in a new folder called `server`
-* Setup listeners for `file-save` and `file-error` events
-* When they occur, `emit()` the appropriate event and payload to clients (specficially, the 'logger' will pick this up)
-
-#### Logger
-* Create a socket.io server for logging in a new folder called `logger`
-* Connect the logger to the socket.io server
-  * Listen for `file-save` and `file-error` events
-  * console.log() both error and save messages
-
-#### Application
-* Create an application folder called `app`)
-* Connect your app to the socket.io server
-* Refactor the app to be modular, testable, and clean
-  * Read/Write should be done in promises, not callbacks
-  * File Reading/Writing/Uppercasing should happen in one module
-    * Each operation should be in a separate function
-* Rather than throwing errors and console.log() inline, fire `file-error` and `file-save` events to the server that you connected to
-
-
-### Operations
-* Start your server on port 3000
-* In a separate terminal window, start your logger (it should connect to the server)
-* In a separate terminal window, run the application from the CLI to alter the file
-* You should observe the event stream in the client and errors on the server
-
+**httpie**
+```
+http post :3000/hidden-stuff "authorization: bearer TOKENHERE"
+```
 
 ### Testing
-* app - Write tests around all of your units
-  * File Read, File Save, Uppercase
-  * Mock the fs module methods so that your tests don't use actual files
-* logger - Test event handler functions (not event listeners themselves)
-  * Use spies to help testing your logger methods (assert that console.log was called right)
+* Add tests to the api routes, asserting restricted access to the routes as shown.
+* Add tests to the mongoose model for the created static and instance methods.
 
-
-### Assignemnt Submission Instructions
+## Assignment Submission Instructions
 Refer to the the [lab submission instructions](../../../reference/submission-instructions/labs/README.md) for the complete lab submission process and expectations
-
-* Your server need not be deployed to Heroku for this lab
